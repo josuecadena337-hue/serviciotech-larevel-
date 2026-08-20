@@ -13,6 +13,10 @@ Route::get('/', function () {
     return view('welcome');
 })->name('inicio');
 
+Route::get('/servicios', function () {
+    return view('servicios');
+})->name('servicios');
+
 // ─────────────────────────────────────────────────────────────
 // AUTENTICACIÓN
 // ─────────────────────────────────────────────────────────────
