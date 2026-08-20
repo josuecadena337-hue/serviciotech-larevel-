@@ -15,7 +15,22 @@ class Evidencia extends Model
         'descripcion',
         'id_solicitud',
         'subido_por',
+        'fecha_subida',
     ];
+
+    protected $attributes = [
+        'fecha_subida' => null,
+    ];
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->fecha_subida)) {
+                $model->fecha_subida = now();
+            }
+        });
+    }
 
     // --- RELACIONES ---
 

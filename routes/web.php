@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\TecnicoController;
 
 // ─────────────────────────────────────────────────────────────
 // PÁGINA PRINCIPAL (pública)
@@ -55,10 +56,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 });
 
 // ─────────────────────────────────────────────────────────────
-// MÓDULO TÉCNICO (temporal)
+// MÓDULO TÉCNICO
 // ─────────────────────────────────────────────────────────────
-Route::middleware(['auth'])->group(function () {
-    Route::get('/tecnico/dashboard', function () {
-        return view('tecnico.dashboard');
-    })->name('tecnico.dashboard');
+Route::middleware(['auth'])->prefix('tecnico')->name('tecnico.')->group(function () {
+    Route::get('/dashboard',                        [TecnicoController::class, 'dashboard'])->name('dashboard');
+    Route::get('/asignaciones',                     [TecnicoController::class, 'misAsignaciones'])->name('asignaciones');
+    Route::get('/asignaciones/{id}',                [TecnicoController::class, 'verSolicitud'])->name('solicitudes.show');
+    Route::post('/asignaciones/{id}/estado',        [TecnicoController::class, 'actualizarEstado'])->name('solicitudes.estado');
+    Route::post('/asignaciones/{id}/evidencia',     [TecnicoController::class, 'subirEvidencia'])->name('solicitudes.evidencia');
+    Route::get('/citas',                            [TecnicoController::class, 'misCitas'])->name('citas');
 });
