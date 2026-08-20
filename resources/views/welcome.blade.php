@@ -72,7 +72,7 @@
     <ul class="navbar-links">
         <li><a href="{{ route('inicio') }}">Inicio</a></li>
         <li><a href="{{ route('servicios') }}">Servicios</a></li>
-        <li><a href="#">Multimedia</a></li>
+        <li><a href="{{ route('multimedia') }}">Multimedia</a></li>
         <li><a href="#contacto">Contacto</a></li>
     </ul>
     <div class="navbar-actions">

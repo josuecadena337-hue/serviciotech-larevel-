@@ -17,6 +17,10 @@ Route::get('/servicios', function () {
     return view('servicios');
 })->name('servicios');
 
+Route::get('/multimedia', function () {
+    return view('multimedia');
+})->name('multimedia');
+
 // ─────────────────────────────────────────────────────────────
 // AUTENTICACIÓN
 // ─────────────────────────────────────────────────────────────
