@@ -21,6 +21,10 @@ Route::get('/multimedia', function () {
     return view('multimedia');
 })->name('multimedia');
 
+Route::get('/contacto', function () {
+    return view('contacto');
+})->name('contacto');
+
 // ─────────────────────────────────────────────────────────────
 // AUTENTICACIÓN
 // ─────────────────────────────────────────────────────────────

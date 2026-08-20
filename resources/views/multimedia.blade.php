@@ -91,7 +91,7 @@
         <li><a href="{{ route('inicio') }}">Inicio</a></li>
         <li><a href="{{ route('servicios') }}">Servicios</a></li>
         <li><a href="{{ route('multimedia') }}" class="active">Multimedia</a></li>
-        <li><a href="#">Contacto</a></li>
+        <li><a href="{{ route('contacto') }}">Contacto</a></li>
     </ul>
     <div class="navbar-actions">
         <a href="{{ route('login') }}" class="btn-login">→ Iniciar Sesión</a>
