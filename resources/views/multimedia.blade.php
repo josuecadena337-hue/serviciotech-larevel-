@@ -93,8 +93,29 @@
         <li><a href="{{ route('contacto') }}">Contacto</a></li>
     </ul>
     <div class="navbar-actions">
-        <a href="{{ route('login') }}" class="btn-login">→ Iniciar Sesión</a>
-        <a href="{{ route('registro') }}" class="btn-register">Registrarse</a>
+        @guest
+            <a href="{{ route('login') }}" class="btn-login">→ Iniciar Sesión</a>
+            <a href="{{ route('registro') }}" class="btn-register">Registrarse</a>
+        @endguest
+        @auth
+            <div style="display:flex; align-items:center; gap:16px;">
+                <span style="font-size:0.875rem; font-weight:600; color:#475569;">
+                    Hola, <strong style="color:#1a237e;">{{ Auth::user()->nombre }}</strong>
+                </span>
+                
+                @php
+                    $rol = Auth::user()->rol->nombre ?? 'cliente';
+                    $ruta = $rol === 'admin' ? 'admin.dashboard' : ($rol === 'tecnico' ? 'tecnico.dashboard' : 'cliente.dashboard');
+                @endphp
+                
+                <a href="{{ route($ruta) }}" class="btn-register" style="background:#1a237e;">Ir a mi Panel</a>
+                
+                <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="btn-login" style="border:1px solid #ef4444; color:#ef4444; padding:7px 16px;">Cerrar sesión</button>
+                </form>
+            </div>
+        @endauth
     </div>
 </nav>
 

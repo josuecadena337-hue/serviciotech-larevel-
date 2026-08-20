@@ -89,10 +89,10 @@
 <body>
 
 <aside class="sidebar">
-    <div class="sidebar-brand">
+    <a href="{{ route('inicio') }}" class="sidebar-brand" style="text-decoration:none; display:block;">
         <h2>🔧 ServicioTech</h2>
         <p>Panel de Técnico</p>
-    </div>
+    </a>
     <div class="sidebar-user">
         <div class="user-name">{{ Auth::user()->nombre }}</div>
         <div class="user-role">🔧 Técnico</div>

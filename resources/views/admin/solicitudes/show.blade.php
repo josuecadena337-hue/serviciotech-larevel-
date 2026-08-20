@@ -4,6 +4,43 @@
 @section('page-title', 'Solicitud #' . $solicitud->id_solicitud)
 @section('breadcrumb', 'Solicitudes › Gestionar')
 
+@push('styles')
+<style>
+    /* ── MODALES ─────────────────────────────── */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1000; opacity: 0; pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-content {
+        background: white; width: 100%; max-width: 500px;
+        border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        transform: translateY(20px); transition: transform 0.2s ease;
+        overflow: hidden;
+    }
+    .modal-overlay.active .modal-content { transform: translateY(0); }
+    .modal-header {
+        padding: 20px 24px; border-bottom: 1px solid #e2e8f0;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+    .btn-close {
+        background: transparent; border: none; font-size: 1.2rem;
+        color: #94a3b8; cursor: pointer; transition: color 0.2s;
+    }
+    .btn-close:hover { color: #dc2626; }
+    .modal-body { padding: 24px; max-height: 70vh; overflow-y: auto; }
+    .modal-footer {
+        padding: 16px 24px; border-top: 1px solid #e2e8f0;
+        display: flex; justify-content: flex-end; gap: 12px;
+        background: #f8fafc;
+    }
+</style>
+@endpush
+
 @section('topbar-actions')
     <a href="{{ route('admin.solicitudes') }}" class="btn btn-secondary">← Volver</a>
 @endsection
@@ -51,27 +88,6 @@
             </div>
         </div>
 
-        {{-- Cambiar estado --}}
-        <div class="card">
-            <div class="card-header"><h3>🔄 Cambiar Estado</h3></div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('admin.solicitudes.estado', $solicitud->id_solicitud) }}" style="display:flex; gap:10px; align-items:flex-end;">
-                    @csrf
-                    <div class="form-group" style="flex:1; margin:0;">
-                        <label>Nuevo estado</label>
-                        <select name="estado_solicitud" class="form-control">
-                            @foreach(['pendiente','asignada','agendada','en_proceso','completada','cancelada'] as $e)
-                                <option value="{{ $e }}" {{ $solicitud->estado_solicitud == $e ? 'selected' : '' }}>
-                                    {{ ucfirst(str_replace('_',' ',$e)) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Actualizar</button>
-                </form>
-            </div>
-        </div>
-
         {{-- Evidencias --}}
         @if($solicitud->evidencias->isNotEmpty())
         <div class="card">
@@ -91,92 +107,180 @@
         @endif
     </div>
 
-    {{-- Columna derecha: acciones --}}
+    {{-- Columna derecha: asignaciones y acciones --}}
     <div>
 
-        {{-- Asignar técnico --}}
+        {{-- Panel de Acciones (Botones que abren Modales) --}}
         <div class="card">
-            <div class="card-header"><h3>👷 Asignar Técnico</h3></div>
+            <div class="card-header"><h3>⚙️ Acciones de Gestión</h3></div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:12px;">
+                <button type="button" onclick="openModal('modal-estado')" class="btn btn-secondary" style="width:100%; justify-content:center;">
+                    🔄 Cambiar Estado Manualmente
+                </button>
+                <button type="button" onclick="openModal('modal-asignar')" class="btn btn-amber" style="width:100%; justify-content:center;">
+                    👷 Asignar Técnico
+                </button>
+                <button type="button" onclick="openModal('modal-cita')" class="btn btn-success" style="width:100%; justify-content:center;">
+                    📅 Agendar Cita
+                </button>
+            </div>
+        </div>
+
+        {{-- Técnico Asignado --}}
+        <div class="card">
+            <div class="card-header"><h3>👷 Técnico Actual</h3></div>
             <div class="card-body">
                 @php $asignacionActiva = $solicitud->asignaciones->where('estado','activa')->first(); @endphp
-
                 @if($asignacionActiva)
-                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px; margin-bottom:14px; font-size:0.85rem; color:#16a34a;">
-                    ✅ Actualmente asignado: <strong>{{ $asignacionActiva->tecnico->usuario->nombre }}</strong>
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px; font-size:0.85rem; color:#16a34a;">
+                    ✅ Asignado a: <strong>{{ $asignacionActiva->tecnico->usuario->nombre }}</strong>
+                </div>
+                @else
+                <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:12px; font-size:0.85rem; color:#d97706;">
+                    ⚠️ Aún no hay ningún técnico asignado.
                 </div>
                 @endif
-
-                <form method="POST" action="{{ route('admin.solicitudes.asignar', $solicitud->id_solicitud) }}">
-                    @csrf
-                    <div class="form-group">
-                        <label>Selecciona un Técnico *</label>
-                        <select name="id_tecnico" class="form-control" required>
-                            <option value="">— Selecciona —</option>
-                            @foreach($tecnicos as $t)
-                                <option value="{{ $t->id_usuario }}"
-                                    {{ $asignacionActiva?->id_tecnico == $t->id_usuario ? 'selected' : '' }}>
-                                    {{ $t->usuario->nombre }}
-                                    ({{ ucfirst($t->disponibilidad) }} — {{ $t->especialidad }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('id_tecnico') <p class="error-msg">{{ $message }}</p> @enderror
-                    </div>
-                    <button type="submit" class="btn btn-amber" style="width:100%;">
-                        👷 {{ $asignacionActiva ? 'Reasignar Técnico' : 'Asignar Técnico' }}
-                    </button>
-                </form>
             </div>
         </div>
 
-        {{-- Agendar cita --}}
+        {{-- Citas Programadas --}}
+        @if($solicitud->citas->isNotEmpty())
         <div class="card">
-            <div class="card-header"><h3>📅 Agendar Cita</h3></div>
-            <div class="card-body">
-                @if($solicitud->citas->isNotEmpty())
-                <div style="margin-bottom:16px;">
-                    @foreach($solicitud->citas as $cita)
-                    <div style="background:#f8fafc; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:0.85rem;">
-                        <p style="font-weight:600;">📅 {{ \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y') }} a las {{ $cita->hora }}</p>
-                        <p style="color:#64748b; font-size:0.78rem; margin-top:2px;">{{ $cita->tecnico->usuario->nombre }}</p>
-                        <span class="badge badge-{{ $cita->estado }}" style="margin-top:4px;">{{ ucfirst($cita->estado) }}</span>
-                    </div>
-                    @endforeach
+            <div class="card-header"><h3>📅 Citas Programadas</h3></div>
+            <div class="card-body" style="padding:16px;">
+                @foreach($solicitud->citas as $cita)
+                <div style="background:#f8fafc; border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:0.85rem;">
+                    <p style="font-weight:600;">📅 {{ \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y') }} a las {{ $cita->hora }}</p>
+                    <p style="color:#64748b; font-size:0.78rem; margin-top:2px;">{{ $cita->tecnico->usuario->nombre }}</p>
+                    <span class="badge badge-{{ $cita->estado }}" style="margin-top:4px;">{{ ucfirst($cita->estado) }}</span>
                 </div>
-                @endif
-
-                <form method="POST" action="{{ route('admin.solicitudes.cita', $solicitud->id_solicitud) }}">
-                    @csrf
-                    <div class="form-group">
-                        <label>Técnico para la cita *</label>
-                        <select name="id_tecnico" class="form-control" required>
-                            <option value="">— Selecciona —</option>
-                            @foreach($tecnicos as $t)
-                                <option value="{{ $t->id_usuario }}">{{ $t->usuario->nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Fecha *</label>
-                            <input type="date" name="fecha" class="form-control"
-                                   min="{{ date('Y-m-d') }}" value="{{ old('fecha') }}" required>
-                            @error('fecha') <p class="error-msg">{{ $message }}</p> @enderror
-                        </div>
-                        <div class="form-group">
-                            <label>Hora *</label>
-                            <input type="time" name="hora" class="form-control" value="{{ old('hora') }}" required>
-                            @error('hora') <p class="error-msg">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-success" style="width:100%;">
-                        📅 Confirmar Cita
-                    </button>
-                </form>
+                @endforeach
             </div>
         </div>
+        @endif
 
     </div>
 </div>
 
+{{-- =========================================================
+     MODAL: CAMBIAR ESTADO
+     ========================================================= --}}
+<div id="modal-estado" class="modal-overlay" onclick="closeModalOnOverlay(event, 'modal-estado')">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🔄 Cambiar Estado</h3>
+            <button class="btn-close" onclick="closeModal('modal-estado')">✖</button>
+        </div>
+        <form method="POST" action="{{ route('admin.solicitudes.estado', $solicitud->id_solicitud) }}">
+            @csrf
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nuevo Estado *</label>
+                    <select name="estado_solicitud" class="form-control" required>
+                        @foreach(['pendiente','asignada','agendada','en_proceso','completada','cancelada'] as $e)
+                            <option value="{{ $e }}" {{ $solicitud->estado_solicitud == $e ? 'selected' : '' }}>
+                                {{ ucfirst(str_replace('_',' ',$e)) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-estado')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- =========================================================
+     MODAL: ASIGNAR TÉCNICO
+     ========================================================= --}}
+<div id="modal-asignar" class="modal-overlay" onclick="closeModalOnOverlay(event, 'modal-asignar')">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>👷 Asignar Técnico</h3>
+            <button class="btn-close" onclick="closeModal('modal-asignar')">✖</button>
+        </div>
+        <form method="POST" action="{{ route('admin.solicitudes.asignar', $solicitud->id_solicitud) }}">
+            @csrf
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Selecciona un Técnico *</label>
+                    <select name="id_tecnico" class="form-control" required>
+                        <option value="">— Selecciona —</option>
+                        @foreach($tecnicos as $t)
+                            <option value="{{ $t->id_usuario }}"
+                                {{ ($asignacionActiva?->id_tecnico == $t->id_usuario) ? 'selected' : '' }}>
+                                {{ $t->usuario->nombre }}
+                                ({{ ucfirst($t->disponibilidad) }} — {{ $t->especialidad }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-asignar')">Cancelar</button>
+                <button type="submit" class="btn btn-amber">Confirmar Asignación</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- =========================================================
+     MODAL: AGENDAR CITA
+     ========================================================= --}}
+<div id="modal-cita" class="modal-overlay" onclick="closeModalOnOverlay(event, 'modal-cita')">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📅 Agendar Cita</h3>
+            <button class="btn-close" onclick="closeModal('modal-cita')">✖</button>
+        </div>
+        <form method="POST" action="{{ route('admin.solicitudes.cita', $solicitud->id_solicitud) }}">
+            @csrf
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Técnico para la cita *</label>
+                    <select name="id_tecnico" class="form-control" required>
+                        <option value="">— Selecciona —</option>
+                        @foreach($tecnicos as $t)
+                            <option value="{{ $t->id_usuario }}">{{ $t->usuario->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Fecha *</label>
+                        <input type="date" name="fecha" class="form-control" min="{{ date('Y-m-d') }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora *</label>
+                        <input type="time" name="hora" class="form-control" required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-cita')">Cancelar</button>
+                <button type="submit" class="btn btn-success">Guardar Cita</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
+
+@push('scripts')
+<script>
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+    function closeModalOnOverlay(event, modalId) {
+        if (event.target.id === modalId) closeModal(modalId);
+    }
+</script>
+@endpush
