@@ -92,8 +92,8 @@
         </div>
     </div>
     <div class="hero-image">
-        <img src="{{ asset('images/hero.jpg') }}" alt="Taller ServicioTech" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
-    </div>
+    <img src="{{ asset('images/hero.jpg') }}" alt="ServicioTech" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+</div>
 </section>
 
 {{-- ¿POR QUÉ ELEGIRNOS? --}}

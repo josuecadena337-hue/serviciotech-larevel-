@@ -41,28 +41,97 @@
         /* GRID */
         .media-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 
-        /* CARD */
+        /* VIDEO CARD */
         .media-card { background: white; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s; }
         .media-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
         .media-card.hidden { display: none; }
 
-        /* VIDEO THUMB */
-        .video-thumb { background: #0f172a; height: 180px; display: flex; align-items: center; justify-content: center; position: relative; }
-        .play-btn { width: 52px; height: 52px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
-        .duration { position: absolute; bottom: 10px; right: 12px; background: rgba(0,0,0,0.7); color: white; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+        /* THUMBNAIL clicable */
+        .video-thumb {
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            background: #0f172a;
+            height: 195px;
+        }
+        .video-thumb img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        .video-thumb:hover img { transform: scale(1.05); }
+        .play-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.3);
+            transition: background 0.2s;
+        }
+        .video-thumb:hover .play-overlay { background: rgba(0,0,0,0.5); }
+        .play-btn {
+            width: 54px; height: 54px;
+            background: white;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            transition: transform 0.2s;
+        }
+        .video-thumb:hover .play-btn { transform: scale(1.1); }
+        .duration-badge {
+            position: absolute; bottom: 10px; right: 12px;
+            background: rgba(0,0,0,0.8);
+            color: white; font-size: 0.72rem; font-weight: 600;
+            padding: 2px 8px; border-radius: 4px;
+        }
 
         /* ARTICLE THUMB */
-        .article-thumb { height: 180px; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; }
+        .article-thumb { height: 195px; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
 
         /* CARD BODY */
         .card-body { padding: 16px 18px 20px; }
         .card-tags { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
         .tag-cat { font-size: 0.7rem; font-weight: 600; color: #3949ab; }
-        .tag-type { font-size: 0.7rem; font-weight: 500; color: #94a3b8; text-transform: uppercase; }
+        .tag-type { font-size: 0.7rem; font-weight: 500; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
         .card-body h3 { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 6px; line-height: 1.4; }
         .card-body p  { font-size: 0.8rem; color: #64748b; line-height: 1.6; margin-bottom: 12px; }
-        .card-link { font-size: 0.82rem; font-weight: 600; color: #3949ab; text-decoration: none; transition: color 0.2s; }
+        .card-link { font-size: 0.82rem; font-weight: 600; color: #3949ab; text-decoration: none; cursor: pointer; transition: color 0.2s; background: none; border: none; font-family: 'Inter', sans-serif; padding: 0; }
         .card-link:hover { color: #1a237e; }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: black;
+            border-radius: 12px;
+            overflow: hidden;
+            width: 90%;
+            max-width: 860px;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 12px; right: 16px;
+            color: white; font-size: 1.8rem;
+            cursor: pointer; z-index: 10;
+            background: rgba(0,0,0,0.5);
+            border: none; border-radius: 50%;
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            line-height: 1;
+            font-family: sans-serif;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.2); }
+        .modal-iframe {
+            width: 100%;
+            aspect-ratio: 16/9;
+            border: none;
+        }
 
         /* FOOTER */
         footer { background: #1e293b; color: white; padding: 48px 48px 24px; margin-top: 60px; }
@@ -98,6 +167,16 @@
     </div>
 </nav>
 
+{{-- MODAL DE VIDEO --}}
+<div class="modal-overlay" id="videoModal" onclick="cerrarModal(event)">
+    <div class="modal-box">
+        <button class="modal-close" onclick="cerrarModalBtn()">✕</button>
+        <iframe class="modal-iframe" id="modalIframe" src="" allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+        </iframe>
+    </div>
+</div>
+
 {{-- CONTENIDO --}}
 <div class="page-content">
     <div class="section-title">
@@ -116,47 +195,57 @@
         <button class="pill-btn" onclick="filtrar('microondas', this)">Microondas</button>
     </div>
 
+    {{-- GRID --}}
     <div class="media-grid">
 
-        {{-- VIDEO: Neveras --}}
+        {{-- VIDEO 1: Neveras --}}
         <div class="media-card" data-tipo="nevera">
-            <div class="video-thumb">
-                <div class="play-btn">▶</div>
-                <span class="duration">5:30</span>
+            <div class="video-thumb" onclick="abrirVideo('BFSoJfF8WYY')">
+                <img src="https://img.youtube.com/vi/BFSoJfF8WYY/hqdefault.jpg" alt="Cómo limpiar tu nevera">
+                <div class="play-overlay">
+                    <div class="play-btn">▶</div>
+                </div>
+                <span class="duration-badge">5:30</span>
             </div>
             <div class="card-body">
                 <div class="card-tags"><span class="tag-cat">Neveras</span><span class="tag-type">VIDEO</span></div>
                 <h3>Cómo limpiar correctamente tu nevera</h3>
                 <p>Aprende las técnicas correctas para mantener tu nevera limpia y funcionando óptimamente.</p>
-                <a href="#" class="card-link">Ver video →</a>
+                <button class="card-link" onclick="abrirVideo('BFSoJfF8WYY')">Ver video →</button>
             </div>
         </div>
 
-        {{-- VIDEO: Lavadoras --}}
+        {{-- VIDEO 2: Lavadoras --}}
         <div class="media-card" data-tipo="lavadora">
-            <div class="video-thumb">
-                <div class="play-btn">▶</div>
-                <span class="duration">7:15</span>
+            <div class="video-thumb" onclick="abrirVideo('oRCVL6YcU3s')">
+                <img src="https://img.youtube.com/vi/oRCVL6YcU3s/hqdefault.jpg" alt="Mantenimiento lavadora">
+                <div class="play-overlay">
+                    <div class="play-btn">▶</div>
+                </div>
+                <span class="duration-badge">7:15</span>
             </div>
             <div class="card-body">
                 <div class="card-tags"><span class="tag-cat">Lavadoras</span><span class="tag-type">VIDEO</span></div>
                 <h3>Mantenimiento preventivo de lavadoras</h3>
                 <p>Consejos prácticos para prolongar la vida útil de tu lavadora.</p>
-                <a href="#" class="card-link">Ver video →</a>
+                <button class="card-link" onclick="abrirVideo('oRCVL6YcU3s')">Ver video →</button>
             </div>
         </div>
 
-        {{-- VIDEO: Aires --}}
+        {{-- VIDEO 3: Aires --}}
         <div class="media-card" data-tipo="aire">
-            <div class="video-thumb">
-                <div class="play-btn">▶</div>
-                <span class="duration">10:45</span>
+            <div class="video-thumb" onclick="abrirVideo('hmPGMFMfGUw')">
+                <img src="https://img.youtube.com/vi/hmPGMFMfGUw/hqdefault.jpg" alt="Instalación aire acondicionado">
+                <div class="play-overlay">
+                    <div class="play-btn">▶</div>
+                </div>
+                <span class="duration-badge">10:45</span>
             </div>
             <div class="card-body">
                 <div class="card-tags"><span class="tag-cat">Aires Acondicionados</span><span class="tag-type">VIDEO</span></div>
                 <h3>Instalación de aire acondicionado paso a paso</h3>
                 <p>Guía completa sobre el proceso de instalación de equipos de aire acondicionado.</p>
-                <a href="#" class="card-link">Ver video →</a>
+                <button class="card-link" onclick="abrirVideo('hmPGMFMfGUw')">Ver video →</button>
             </div>
         </div>
 
@@ -193,17 +282,20 @@
             </div>
         </div>
 
-        {{-- VIDEO: Estufas --}}
+        {{-- VIDEO 4: Estufas --}}
         <div class="media-card" data-tipo="estufa">
-            <div class="video-thumb">
-                <div class="play-btn">▶</div>
-                <span class="duration">6:20</span>
+            <div class="video-thumb" onclick="abrirVideo('6EMhqQcJBJE')">
+                <img src="https://img.youtube.com/vi/6EMhqQcJBJE/hqdefault.jpg" alt="Limpieza estufa">
+                <div class="play-overlay">
+                    <div class="play-btn">▶</div>
+                </div>
+                <span class="duration-badge">6:20</span>
             </div>
             <div class="card-body">
                 <div class="card-tags"><span class="tag-cat">Estufas</span><span class="tag-type">VIDEO</span></div>
                 <h3>Cómo limpiar los quemadores de tu estufa</h3>
                 <p>Paso a paso para dejar los quemadores de tu estufa como nuevos.</p>
-                <a href="#" class="card-link">Ver video →</a>
+                <button class="card-link" onclick="abrirVideo('6EMhqQcJBJE')">Ver video →</button>
             </div>
         </div>
 
@@ -218,17 +310,20 @@
             </div>
         </div>
 
-        {{-- VIDEO: Microondas --}}
+        {{-- VIDEO 5: Microondas --}}
         <div class="media-card" data-tipo="microondas">
-            <div class="video-thumb">
-                <div class="play-btn">▶</div>
-                <span class="duration">4:50</span>
+            <div class="video-thumb" onclick="abrirVideo('XPAN_4VNFpA')">
+                <img src="https://img.youtube.com/vi/XPAN_4VNFpA/hqdefault.jpg" alt="Limpieza microondas">
+                <div class="play-overlay">
+                    <div class="play-btn">▶</div>
+                </div>
+                <span class="duration-badge">4:50</span>
             </div>
             <div class="card-body">
                 <div class="card-tags"><span class="tag-cat">Microondas</span><span class="tag-type">VIDEO</span></div>
                 <h3>Limpieza profunda de microondas en 5 minutos</h3>
                 <p>Técnicas rápidas y efectivas para mantener tu microondas impecable.</p>
-                <a href="#" class="card-link">Ver video →</a>
+                <button class="card-link" onclick="abrirVideo('XPAN_4VNFpA')">Ver video →</button>
             </div>
         </div>
 
@@ -253,9 +348,9 @@
         <div class="footer-col">
             <h4>Síguenos</h4>
             <div style="display:flex; gap:16px; margin-top:4px;">
-                <a href="#" style="color:rgba(255,255,255,0.6); text-decoration:none;">f</a>
-                <a href="#" style="color:rgba(255,255,255,0.6); text-decoration:none;">ig</a>
-                <a href="#" style="color:rgba(255,255,255,0.6); text-decoration:none;">tw</a>
+                <a href="#" style="color:rgba(255,255,255,0.6); text-decoration:none; font-size:1.1rem;">f</a>
+                <a href="#" style="color:rgba(255,255,255,0.6); text-decoration:none; font-size:1.1rem;">ig</a>
+                <a href="#" style="color:rgba(255,255,255,0.6); text-decoration:none; font-size:1.1rem;">tw</a>
             </div>
         </div>
     </div>
@@ -265,6 +360,33 @@
 </footer>
 
 <script>
+    // Abrir modal con el video
+    function abrirVideo(videoId) {
+        const modal = document.getElementById('videoModal');
+        const iframe = document.getElementById('modalIframe');
+        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Cerrar al hacer clic fuera del video
+    function cerrarModal(e) {
+        if (e.target === document.getElementById('videoModal')) cerrarModalBtn();
+    }
+
+    // Cerrar con el botón X
+    function cerrarModalBtn() {
+        const modal = document.getElementById('videoModal');
+        const iframe = document.getElementById('modalIframe');
+        modal.classList.remove('open');
+        iframe.src = ''; // detiene el video
+        document.body.style.overflow = '';
+    }
+
+    // Cerrar con tecla Escape
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModalBtn(); });
+
+    // Filtros
     function filtrar(tipo, btn) {
         document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');

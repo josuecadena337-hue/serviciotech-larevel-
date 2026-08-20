@@ -91,9 +91,7 @@
             <a href="{{ route('login') }}" class="btn-hero-secondary">Iniciar Sesión</a>
         </div>
     </div>
-    <div class="hero-image">
-        <img src="{{ asset('images/hero.jpg') }}" alt="Taller ServicioTech" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
-    </div>
+    <div class="hero-image"></div>
 </section>
 
 {{-- ¿POR QUÉ ELEGIRNOS? --}}
